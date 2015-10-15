@@ -1,0 +1,4 @@
+build/min/
+node_modules/
+lib/*/*
+npm-debug.log
