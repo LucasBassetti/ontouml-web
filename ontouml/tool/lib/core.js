@@ -25,3 +25,6 @@
 var ontology = {
     tool : {}
 }
+
+var relationships = {};
+var relationshipsKeys = {};

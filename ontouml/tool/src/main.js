@@ -26,12 +26,13 @@ var Rappid = Backbone.Router.extend({
         this.initializeClipboard();
         this.initializeCommandManager();
         this.initializeToolbar();
+        this.initializeValidator();
         // Intentionally commented out. See the `initializeValidator()` method for reasons.
         // Uncomment for demo purposes.
         // this.initializeValidator();
         // Commented out by default. You need to run `node channelHub.js` in order to make
         // channels working. See the documentation to the joint.com.Channel plugin for details.
-        this.initializeChannel('ws://jointjs.com:4141');
+        //this.initializeChannel('ws://jointjs.com:4141');
         if (this.options.channelUrl) {
             this.initializeChannel(this.options.channelUrl);
         }
@@ -42,15 +43,15 @@ var Rappid = Backbone.Router.extend({
         
         this.graph = new joint.dia.Graph;
 
-        this.graph.on('add', function(cell, collection, opt) {
-            if (opt.stencil) {
-                this.createInspector(cell);
-                this.commandManager.stopListening();
-                this.inspector.updateCell();
-                this.commandManager.listen();
-                this.inspector.$('[data-attribute]:first').focus();
-            }
-        }, this);
+//        this.graph.on('add', function(cell, collection, opt) {
+//            if (opt.stencil) {
+//                this.createInspector(cell);
+//                this.commandManager.stopListening();
+//                this.inspector.updateCell();
+//                this.commandManager.listen();
+//                this.inspector.$('[data-attribute]:first').focus();
+//            }
+//        }, this);
 
         this.paper = new joint.dia.Paper({
             width: 1000,
@@ -58,22 +59,25 @@ var Rappid = Backbone.Router.extend({
             gridSize: 10,
             perpendicularLinks: true,
             model: this.graph,
-            defaultLink: new joint.dia.Link({
+            defaultLink: new joint.shapes.ontouml.Relationships({
                 attrs: {
                     // @TODO: scale(0) fails in Firefox
-                    '.marker-source': { d: 'M 10 0 L 0 5 L 10 10 z', transform: 'scale(0.001)' },
-                    '.marker-target': { d: 'M 10 0 L 0 5 L 10 10 z' },
+//                    '.marker-source': { d: 'M 10 0 L 0 5 L 10 10 z' },
+//                    '.marker-target': { d: 'M 10 0 L 0 5 L 10 10 z' },
                     '.connection': {
                         stroke: 'black'
                         // filter: { name: 'dropShadow', args: { dx: 1, dy: 1, blur: 2 } }
                     }
-                }
-            })
+                },
+                //"label": '',
+                "sourceMultiplicity": "1..*",
+                "targetMultiplicity": "1..*",
+            }),
         });
 
         this.paperScroller = new joint.ui.PaperScroller({
             autoResizePaper: true,
-            padding: 50,
+            padding: 0,
             paper: this.paper
         });
 
@@ -122,8 +126,7 @@ var Rappid = Backbone.Router.extend({
             width: 240,
             groups: Stencil.groups,
             search: {
-                '*': ['type','attrs/text/text','attrs/.label/text'],
-                'org.Member': ['attrs/.rank/text','attrs/.name/text']
+                '*': ['subType','attrs/text/text','attrs/.label/text'],
             }
         });
 
@@ -133,12 +136,12 @@ var Rappid = Backbone.Router.extend({
         $('.stencil-paper-drag').on('contextmenu', function(evt) { evt.preventDefault(); });
 
         var layoutOptions = {
-            columnWidth: this.stencil.options.width / 2 - 10,
-            columns: 2,
-            rowHeight: 80,
+            columnWidth: this.stencil.options.width / 3.5 - 10,
+            columns: 4,
+            rowHeight: 60,
             resizeToFit: true,
-            dy: 10,
-            dx: 10
+            dy: 5,
+            dx: 5
         };
 
         _.each(Stencil.groups, function(group, name) {
@@ -168,9 +171,9 @@ var Rappid = Backbone.Router.extend({
 
                 new joint.ui.Tooltip({
                     target: '.stencil [model-id="' + cell.id + '"]',
-                    content: cell.get('type').split('.').join(' '),
-                    left: '.stencil',
-                    direction: 'left'
+                    content: cell.get('subType').split('.').join(' '),
+                    right: '.stencil-container',
+                    direction: 'right'
                 });
             });
         });
@@ -181,6 +184,8 @@ var Rappid = Backbone.Router.extend({
         this.selection = new Backbone.Collection;
         this.selectionView = new joint.ui.SelectionView({ paper: this.paper, graph: this.graph, model: this.selection });
 
+        this.selectionView.removeHandle('rotate');
+        
         // Initiate selecting when the user grabs the blank area of the paper while the Shift key is pressed.
         // Otherwise, initiate paper pan.
         this.paper.on('blank:pointerdown', function(evt, x, y) {
@@ -310,7 +315,10 @@ var Rappid = Backbone.Router.extend({
             // Therefore, remove the resize tool handle and reposition the clone tool handle to make the
             // handles nicely spread around the elements.
             halo.removeHandle('resize');
-            halo.changeHandle('clone', { position: 'se' });
+            halo.removeHandle('fork');
+            halo.removeHandle('clone');
+            halo.removeHandle('rotate');
+            //halo.changeHandle('clone', { position: 'se' });
             
             freetransform.render();
             halo.render();
@@ -413,14 +421,14 @@ var Rappid = Backbone.Router.extend({
             // Make sure pasted elements get selected immediately. This makes the UX better as
             // the user can immediately manipulate the pasted elements.
             this.clipboard.each(function(cell) {
-
+            	
                 if (cell.get('type') === 'link') return;
 
                 // Push to the selection not to the model from the clipboard but put the model into the graph.
                 // Note that they are different models. There is no views associated with the models
                 // in clipboard.
                 this.selection.add(this.graph.getCell(cell.id));
-		this.selectionView.createSelectionBox(cell.findView(this.paper));
+                this.selectionView.createSelectionBox(cell.findView(this.paper));
 
             }, this);
 
@@ -460,21 +468,21 @@ var Rappid = Backbone.Router.extend({
         
         this.validator = new joint.dia.Validator({ commandManager: this.commandManager });
 
-        this.validator.validate('change:position change:size add', _.bind(function(err, command, next) {
-
-            if (command.action === 'add' && command.batch) return next();
-
-            var cell = command.data.attributes || this.graph.getCell(command.data.id).toJSON();
-            var area = g.rect(cell.position.x, cell.position.y, cell.size.width, cell.size.height);
-
-            if (_.find(this.graph.getElements(), function(e) {
-
-	        var position = e.get('position');
-                var size = e.get('size');
-	        return (e.id !== cell.id && area.intersect(g.rect(position.x, position.y, size.width, size.height)));
-
-            })) return next("Another cell in the way!");
-        }, this));
+//        this.validator.validate('change:position change:size add', _.bind(function(err, command, next) {
+//
+//            if (command.action === 'add' && command.batch) return next();
+//
+//            var cell = command.data.attributes || this.graph.getCell(command.data.id).toJSON();
+//            var area = g.rect(cell.position.x, cell.position.y, cell.size.width, cell.size.height);
+//
+//            if (_.find(this.graph.getElements(), function(e) {
+//
+//	        var position = e.get('position');
+//                var size = e.get('size');
+//	        return (e.id !== cell.id && area.intersect(g.rect(position.x, position.y, size.width, size.height)));
+//
+//            })) return next("Another cell in the way!");
+//        }, this));
 
         this.validator.on('invalid',function(message) {
             
