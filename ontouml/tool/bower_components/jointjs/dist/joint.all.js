@@ -29760,7 +29760,9 @@ joint.dia.CommandManager = Backbone.Model.extend({
 
             default:
                 var attribute = cmd.action.substr(this.PREFIX_LENGTH);
-                cell.set(attribute, cmd.data.previous[attribute]);
+                if(cell) {
+                	cell.set(attribute, cmd.data.previous[attribute]);
+                }
                 break;
             }
 

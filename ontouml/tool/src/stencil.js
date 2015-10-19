@@ -1,5 +1,5 @@
 var Stencil = {};
-var ns = 'http://localhost:8080/nemo-platform/ontology#';
+var ns = 'http://ontology.com.br/ontouml/resource#';
 var attr = { '.name-text': { 'font-size': 8 } };
 
 Stencil.groups = {

@@ -51,8 +51,11 @@ h1 {
 
 .relationships-container, .relationships-container tr, .relationships-container th, .relationships-container td {
 	width: 100%;
-	padding: 5px;
-	border-bottom: 1px solid #e7e7e7;
+	padding: 5px;	
+}
+
+.relationships-container tr, .relationships-container th, .relationships-container td {
+    border-bottom: 1px solid #e7e7e7;
 }
 
 .relationships-container td {

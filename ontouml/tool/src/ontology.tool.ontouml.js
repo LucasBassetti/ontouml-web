@@ -36,6 +36,7 @@ ontology.tool.OntoUML = Backbone.View.extend({
 		this.app = app;
 		this.initializeResizingProcedures();
         this.initializeRelationshipsProcedures();
+        this.initializeFileProcedures();
 		
 	},
 	
@@ -171,5 +172,58 @@ ontology.tool.OntoUML = Backbone.View.extend({
 		});
 		
     },
+    
+    initializeFileProcedures: function() {
+      
+        var $this = this;
+        var graph = this.app.graph;
+        
+        $('#btn-save').click(function() {
+            $this.openDownloadWindows(JSON.stringify(graph), "file.ontouml");    
+        });
+        
+        $('#btn-open').click(function() {
+
+            var content = '<textarea rows="10" cols="60" id="fileContent"/>';
+            
+            var dialog = new joint.ui.Dialog({
+				width: 400,
+				type: 'neutral',
+				title: 'Paste the .ontouml file content here',
+				content: content,
+				buttons: [
+				            { action: 'cancel', content: 'Cancel', position: 'left' },
+                            { action: 'open', content: 'Open', position: 'left' },
+				          ]
+			});
+            dialog.on('action:open', open);
+			dialog.on('action:cancel', cancel);
+			dialog.on('action:close', cancel);
+			dialog.open();
+            
+			function cancel() {
+				dialog.close();
+			};
+            
+            function open() {
+                
+                var fileContent = $('#fileContent').val();
+                
+                graph.fromJSON($.parseJSON(fileContent));
+                dialog.close();
+            }
+            
+        });
+        
+    },
+    
+    //open download windows
+	openDownloadWindows: function(content, file) {
+		var blob = new Blob([content]);
+		var link = document.createElement('a');
+		link.href = window.URL.createObjectURL(blob);
+		link.download = file;
+		link.click();
+	},
 	
 });

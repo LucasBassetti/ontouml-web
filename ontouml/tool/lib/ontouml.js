@@ -371,7 +371,7 @@ joint.shapes.ontouml.Relationships = joint.dia.Link.extend({
 
         joint.dia.Link.prototype.initialize.apply(this, arguments);
 
-        this.listenTo(this, 'change:relationshipType', this.onFlowTypeChange);
+        this.listenTo(this, 'change:relationshipType', this.onRelationshipTypeChange);
         
         this.on('add change:label change:sourceMultiplicity change:targetMultiplicity', function() {
             this.updateLabel();

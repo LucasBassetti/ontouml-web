@@ -25,6 +25,8 @@
     <body>
         <h1><a href="http://ontology.com.br" target="_blank" style="color:#FFF;text-decoration:none;"> OntoUML Tool </a></h1>
         <div class="toolbar-container">
+            <button id="btn-save" class="btn" data-tooltip="Save"><img src="./img/save.png" alt="Save"/></button>
+            <button id="btn-open" class="btn" data-tooltip="Open"><img src="./img/open.png" alt="Open"/></button>
             <button id="btn-undo" class="btn" data-tooltip="Undo"><img src="./img/undo.png" alt="Undo"/></button>
             <button id="btn-redo" class="btn" data-tooltip="Redo"><img src="./img/redo.png" alt="Redo"/></button>
             <button id="btn-clear" class="btn" data-tooltip="Clear Paper"><img src="./img/clear.png" alt="Clear"/></button>
@@ -56,6 +58,8 @@
         <div class="paper-container"></div>
         <div class="inspector-container"></div>
         <div class="navigator-container"></div>
+        
+        <input type="file" id="theFile" />
 
         <!-- Components-->
         <script src="./bower_components/jquery/jquery.min.js"></script>
